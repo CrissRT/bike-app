@@ -243,32 +243,7 @@ export async function updateBikeStatus(
 
       if (!updateResult.data || !updateResult.data.updatedCells) return null;
 
-      const currentDate = new Date();
-      const day = currentDate.getDate();
-      const month = currentDate.toLocaleString("en-US", { month: "short" });
-      const year = currentDate.getFullYear().toString().slice(-2);
-      const formattedDate = `${day} ${month} ${year}`;
-
-      const logEntry = [
-        formattedDate,
-        logType,
-        bikeId,
-        bike.brand,
-        logType === "Added" ? newUser : bike.user || "",
-      ];
-
-      try {
-        await glSheets.spreadsheets.values.append({
-          spreadsheetId: process.env.GOOGLE_SHEET_ID,
-          range: "Logs!A:E",
-          valueInputOption: "RAW",
-          requestBody: {
-            values: [logEntry],
-          },
-        });
-      } catch (logError) {
-        console.warn("Failed to add log entry:", logError);
-      }
+      await addLog(logType, bikeId, bike, newUser);
 
       return true;
     });
@@ -377,5 +352,42 @@ export async function getBikeCount(): Promise<
         }`
       ),
     };
+  }
+}
+
+async function addLog(
+  logType: "Added" | "Returned",
+  bikeId: number,
+  bike: Bike,
+  newUser: string
+) {
+  const glSheets = await getGoogleSheetsClient();
+
+  if (!glSheets) return null;
+  const currentDate = new Date();
+  const day = currentDate.getDate();
+  const month = currentDate.toLocaleString("en-US", { month: "short" });
+  const year = currentDate.getFullYear().toString().slice(-2);
+  const formattedDate = `${day} ${month} ${year}`;
+
+  const logEntry = [
+    formattedDate,
+    logType,
+    bikeId,
+    bike.brand,
+    logType === "Added" ? newUser : bike.user || "",
+  ];
+
+  try {
+    await glSheets.spreadsheets.values.append({
+      spreadsheetId: process.env.GOOGLE_SHEET_ID,
+      range: "Logs!A:E",
+      valueInputOption: "RAW",
+      requestBody: {
+        values: [logEntry],
+      },
+    });
+  } catch (logError) {
+    console.warn("Failed to add log entry:", logError);
   }
 }
