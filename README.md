@@ -155,12 +155,27 @@ src/
 3. **Active Bikes**: Shows current user and "Set Inactive" button to return the bike
 4. **Inactive Bikes**: Shows user input field and "Set Active" button to assign the bike
 5. **Real-time Updates**: All changes are immediately reflected in Google Sheets
+6. **Automatic Logging**: All status changes are automatically logged to the "Logs" sheet with:
+   - Formatted date (DD MMM YY format)
+   - Action type (Added/Returned)
+   - Bike details (ID, brand)
+   - User information
 
 ### Error Handling
 
 - **Graceful Error Pages**: Custom 404 pages for missing bikes and general errors
 - **API Error Handling**: All API functions return structured success/error responses
 - **User-Friendly Messages**: Clear error messages displayed to users
+- **Retry Logic**: Built-in exponential backoff retry mechanism for Google Sheets API calls
+
+### Logging System
+
+- **Automatic Logging**: All bike status changes are automatically logged to the "Logs" sheet
+- **Comprehensive Data**: Each log entry includes date, action type, bike ID, brand, and user
+- **Date Formatting**: Uses human-readable format (e.g., "16 Jul 25")
+- **User Attribution**:
+  - "Added" entries show who took the bike
+  - "Returned" entries show who returned the bike
 
 ## API Functions
 
@@ -171,12 +186,12 @@ All API functions are server actions that return structured responses:
 - **`getAllBikes()`**: Fetches all bikes from Google Sheets
 
   - Returns: `SuccessResponse<Bike[]>` or `ErrorResponse`
-  - Features: Real-time data, error handling, data validation
+  - Features: Real-time data, error handling, data validation, retry logic
 
 - **`getBikeById(id: number)`**: Fetches a specific bike by ID
 
   - Returns: `SuccessResponse<Bike>` or `ErrorResponse`
-  - Features: Input validation, not found handling
+  - Features: Input validation, not found handling, retry logic
 
 - **`updateBikeStatus(formData: FormData)`**: Updates bike status and user assignment
   - Returns: `SuccessResponse<void>` or `ErrorResponse`
@@ -193,6 +208,20 @@ All API functions are server actions that return structured responses:
 
 - **`validateGoogleSheetsConnection()`**: Validates Google Sheets connection
   - Returns: Connection status and sheet information
+
+### Helper Functions
+
+- **`getGoogleSheetsClient()`**: Creates and manages Google Sheets API client
+
+  - Features: Singleton pattern, credential management, error handling
+
+- **`retryOperation<T>()`**: Implements retry logic for API operations
+
+  - Features: Exponential backoff, configurable retries, error logging
+
+- **`addLog()`**: Handles logging of bike status changes
+  - Features: Date formatting, conditional user assignment, Google Sheets integration
+  - Formatting: Applies cell colors and borders based on action type
 
 ### Response Types
 
@@ -229,7 +258,16 @@ interface Bike {
 
 - **No Thrown Errors**: All functions return structured responses instead of throwing
 - **Graceful Degradation**: UI handles errors gracefully with user-friendly messages
-- **Retry Logic**: Built-in retry mechanism for Google Sheets API calls
+- **Retry Logic**: Built-in exponential backoff retry mechanism for Google Sheets API calls
+- **Comprehensive Logging**: Failed operations are logged with detailed error messages
+
+### Logging & Analytics
+
+- **Automatic Activity Logging**: All bike status changes are automatically tracked
+- **Visual Log Formatting**: Color-coded entries with borders for easy reading
+- **Historical Data**: Complete audit trail of all bike transactions
+- **User Attribution**: Clear tracking of who performed each action
+- **Date Formatting**: Human-readable date format for better usability
 
 ### User Experience
 
