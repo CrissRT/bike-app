@@ -33,52 +33,208 @@ pnpm install
 
 2. **Configure Google Sheets API**:
 
-   - Create a Google Cloud project
-   - Enable Google Sheets API
-   - Create a service account and download the JSON key
-   - Rename the key file to `googleKey.json` and place it in the project root
+   ### Step 1: Create a Google Cloud Project
+
+   1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+   2. Click on the project dropdown at the top of the page
+   3. Click "New Project"
+   4. Enter a project name (e.g., "bike-rental-app")
+   5. Click "Create"
+   6. Wait for the project to be created and select it
+
+   ### Step 2: Enable the Google Sheets API
+
+   1. In the Google Cloud Console, navigate to "APIs & Services" → "Library"
+   2. Search for "Google Sheets API"
+   3. Click on "Google Sheets API" from the results
+   4. Click "Enable"
+   5. Wait for the API to be enabled
+
+   ### Step 3: Create Service Account Credentials
+
+   1. Go to "APIs & Services" → "Credentials"
+   2. Click "Create Credentials" → "Service Account"
+   3. Fill in the service account details:
+      - **Service account name**: `bike-rental-service`
+      - **Service account ID**: Will be auto-generated
+      - **Description**: `Service account for bike rental app`
+   4. Click "Create and Continue"
+   5. Skip the optional role assignment (click "Continue")
+   6. Skip granting user access (click "Done")
+
+   ### Step 4: Generate and Download the JSON Key
+
+   1. Find your newly created service account in the credentials list
+   2. Click on the service account email
+   3. Go to the "Keys" tab
+   4. Click "Add Key" → "Create New Key"
+   5. Select "JSON" as the key type
+   6. Click "Create"
+   7. The JSON key file will be downloaded automatically
+   8. **Important**: Rename this file to `googleKey.json` and place it in your project root directory
+
+   ### Step 5: Share Your Google Sheet with the Service Account
+
+   1. Open your Google Sheet
+   2. Click the "Share" button
+   3. In the service account JSON file, find the `client_email` field
+   4. Copy the email address (it looks like: `bike-rental-service@your-project.iam.gserviceaccount.com`)
+   5. Paste this email in the "Share with people and groups" field
+   6. Set permissions to "Editor"
+   7. **Uncheck** "Notify people" (since it's a service account)
+   8. Click "Share"
+
+   ### Step 6: Get Your Google Sheet ID
+
+   1. Open your Google Sheet
+   2. Look at the URL: `https://docs.google.com/spreadsheets/d/SHEET_ID/edit#gid=0`
+   3. Copy the `SHEET_ID` portion (the long string between `/d/` and `/edit`)
+   4. You'll need this for the environment variables
+
+   ### Security Note
+
+   - **Never commit** the `googleKey.json` file to version control
+   - The file is already included in `.gitignore`
+   - Keep this file secure as it provides access to your Google Cloud project
 
 3. **Set up environment variables**:
 
-   Create a `.env.local` file and add your Google Sheet ID:
+   Create a `.env` file in your project root and add your Google Sheet ID:
 
-   ```
+   ```bash
    GOOGLE_SHEET_ID=your_actual_google_sheet_id_here
    ```
 
-4. **Google Sheets Structure**:
-   Your Google Sheet should have two sheets:
+   **How to find your Google Sheet ID:**
 
-   **"Bikes Database" sheet with columns:**
+   - Open your Google Sheet
+   - Look at the URL: `https://docs.google.com/spreadsheets/d/SHEET_ID/edit#gid=0`
+   - Copy the `SHEET_ID` portion (the long string between `/d/` and `/edit`)
+   - Paste it as the value for `GOOGLE_SHEET_ID`
 
-   - **A**: ID (number) - Unique bike identifier
-   - **B**: Status (Active/Inactive) - Current bike status
-   - **C**: Brand (text) - Bike brand/model
-   - **D**: User (text) - Current user (empty for inactive bikes)
+   **Example:**
 
-   **"Logs" sheet with columns:**
-
-   - **A**: Date (DD MMM YY format) - Date of status change
-   - **B**: Type (Added/Returned) - Type of action
-   - **C**: Bike Number (number) - Bike ID
-   - **D**: Brand (text) - Bike brand
-   - **E**: User (text) - User involved in the action
-
-   Example Bikes Database data:
-
-   ```
-   1  | Active   | Trek    | John Doe
-   2  | Inactive | Giant   |
-   3  | Active   | Specialized | Jane Smith
+   ```bash
+   GOOGLE_SHEET_ID=1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms
    ```
 
-   Example Logs data:
+   **Note:** The `.env` file is automatically ignored by Git for security.
 
+## Quick Start Guide
+
+### Testing Your Setup
+
+After completing the setup steps above, you can verify everything is working:
+
+1. **Start the development server:**
+
+   ```bash
+   pnpm dev
    ```
-   15 Jul 25 | Added    | 1 | Trek    | John Doe
-   15 Jul 25 | Returned | 2 | Giant   | Jane Smith
-   16 Jul 25 | Added    | 3 | Specialized | Mike Johnson
-   ```
+
+2. **Open your browser** and go to [http://localhost:3000](http://localhost:3000)
+
+3. **Test the connection:**
+
+   - If you see the home page, the basic setup is working
+   - Navigate to `/bikes` to test the Google Sheets connection
+   - If you see your bike data, everything is configured correctly!
+
+4. **If you get errors:**
+   - Check the browser console (F12) for client-side errors
+   - Check the terminal for server-side errors
+   - Refer to the [Troubleshooting](#troubleshooting-setup) section below
+
+### Sample Data for Testing
+
+You can use this sample data to test your Google Sheets setup:
+
+**Bikes Database sheet:**
+
+```
+ID | Status   | Brand       | User
+1  | Active   | Trek        | John Doe
+2  | Inactive | Giant       |
+3  | Active   | Specialized | Jane Smith
+4  | Inactive | Cannondale  |
+```
+
+**Logs sheet:** (This will be populated automatically when you use the app)
+
+```
+Date      | Type     | Bike Number | Brand       | User
+15 Jul 25 | Added    | 1          | Trek        | John Doe
+15 Jul 25 | Returned | 2          | Giant       | Jane Smith
+```
+
+## Troubleshooting Setup
+
+### Common Issues and Solutions
+
+#### 1. "Failed to initialize Google Sheets client" Error
+
+**Problem:** The app cannot connect to Google Sheets.
+
+**Solutions:**
+
+- Check that `googleKey.json` exists in your project root
+- Verify the JSON file is valid (not corrupted during download)
+- Ensure the service account email has been shared with your Google Sheet
+- Check that the Google Sheets API is enabled in your Google Cloud project
+
+#### 2. "Permission denied" or "Forbidden" Error
+
+**Problem:** The service account doesn't have access to your Google Sheet.
+
+**Solutions:**
+
+- Open your Google Sheet and click "Share"
+- Add the service account email (from `client_email` in `googleKey.json`)
+- Set permissions to "Editor"
+- Make sure you unchecked "Notify people" when sharing
+
+#### 3. "Sheet not found" Error
+
+**Problem:** The app cannot find the specified sheets.
+
+**Solutions:**
+
+- Ensure your Google Sheet has exactly two sheets named:
+  - "Bikes Database"
+  - "Logs"
+- Check for typos in sheet names (case-sensitive)
+- Verify your `GOOGLE_SHEET_ID` in `.env` is correct
+
+#### 4. Environment Variables Not Working
+
+**Problem:** The app says it can't find environment variables.
+
+**Solutions:**
+
+- Ensure the file is named `.env`
+- Check that the file is in your project root directory
+- Restart your development server after creating/modifying `.env`
+- Verify there are no extra spaces around the `=` sign
+
+#### 5. "Invalid credentials" Error
+
+**Problem:** The service account credentials are invalid.
+
+**Solutions:**
+
+- Re-download the JSON key from Google Cloud Console
+- Ensure you selected "JSON" when creating the key
+- Check that the file wasn't corrupted during download
+- Verify you're using the correct Google Cloud project
+
+### Getting Help
+
+If you're still having issues:
+
+1. Check the browser console for detailed error messages
+2. Review the terminal output for server-side errors
+3. Ensure all steps in the setup guide were followed exactly
+4. Try creating a new service account if problems persist
 
 ## Running the Application
 
