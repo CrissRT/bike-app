@@ -1,9 +1,10 @@
 import { getBikeById, updateBikeStatus } from "@/actions/google";
-import { redirect, notFound } from "next/navigation";
+import { notFound } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import BikeForm from "@/components/BikeForm";
 
 interface BikePageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 async function handleUpdateBike(formData: FormData) {
@@ -13,9 +14,9 @@ async function handleUpdateBike(formData: FormData) {
   const currentStatus = String(formData.get("currentStatus"));
   const userName = String(formData.get("userName"));
 
-  if (currentStatus === "Active")
+  if (currentStatus === "Active") {
     await updateBikeStatus(bikeId, "Inactive", "");
-  else {
+  } else {
     const trimmedUserName = userName.trim();
     if (!trimmedUserName)
       throw new Error("User name is required to activate bike");
@@ -23,7 +24,8 @@ async function handleUpdateBike(formData: FormData) {
     await updateBikeStatus(bikeId, "Active", trimmedUserName);
   }
 
-  redirect(`/bike/${bikeId}`);
+  // Revalidate the current page to refresh the data
+  revalidatePath(`/bike/${bikeId}`);
 }
 
 export default async function BikePage({ params }: BikePageProps) {

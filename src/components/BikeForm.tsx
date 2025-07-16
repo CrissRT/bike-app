@@ -1,7 +1,6 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
-import { useState } from "react";
 
 interface BikeFormProps {
   bike: {
@@ -12,13 +11,7 @@ interface BikeFormProps {
   handleUpdateBike: (formData: FormData) => Promise<void>;
 }
 
-function SubmitButton({ 
-  isActive, 
-  user 
-}: { 
-  isActive: boolean; 
-  user: string; 
-}) {
+function SubmitButton({ isActive }: { isActive: boolean }) {
   const { pending } = useFormStatus();
 
   if (isActive) {
@@ -105,29 +98,12 @@ function SubmitButton({
 }
 
 export default function BikeForm({ bike, handleUpdateBike }: BikeFormProps) {
-  const [error, setError] = useState<string | null>(null);
   const isActive = bike.status === "Active";
 
-  const handleSubmit = async (formData: FormData) => {
-    try {
-      setError(null);
-      await handleUpdateBike(formData);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    }
-  };
-
   return (
-    <form action={handleSubmit} className="space-y-6">
+    <form action={handleUpdateBike} className="space-y-6">
       <input type="hidden" name="bikeId" value={bike.id} />
       <input type="hidden" name="currentStatus" value={bike.status} />
-
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
-          <p className="font-medium">Error:</p>
-          <p>{error}</p>
-        </div>
-      )}
 
       {isActive ? (
         <div className="text-center">
@@ -135,7 +111,7 @@ export default function BikeForm({ bike, handleUpdateBike }: BikeFormProps) {
             This bike is currently active and assigned to {bike.user}. Click
             below to return the bike and set it as inactive.
           </p>
-          <SubmitButton isActive={isActive} user={bike.user} />
+          <SubmitButton isActive={isActive} />
         </div>
       ) : (
         <div className="space-y-4">
@@ -156,7 +132,7 @@ export default function BikeForm({ bike, handleUpdateBike }: BikeFormProps) {
             />
           </div>
           <div className="text-center">
-            <SubmitButton isActive={isActive} user={bike.user} />
+            <SubmitButton isActive={isActive} />
           </div>
         </div>
       )}
