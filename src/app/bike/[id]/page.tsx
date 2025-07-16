@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getBikeById, updateBikeStatus } from "@/actions/google";
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 
 interface BikePageProps {
   params: { id: string };
@@ -27,33 +27,12 @@ async function handleUpdateBike(formData: FormData) {
 }
 
 export default async function BikePage({ params }: BikePageProps) {
-  const bikeId = Number(params.id);
+  const { id } = await params;
+  const bikeId = Number(id);
   const bike = await getBikeById(bikeId);
 
   if (!bike) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-2xl mx-auto px-4">
-          <div className="mb-8">
-            <Link
-              href="/bikes"
-              className="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium"
-            >
-              ← Back to All Bikes
-            </Link>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-            <h1 className="text-2xl font-bold text-gray-800 mb-4">
-              Bike Not Found
-            </h1>
-            <p className="text-gray-600">
-              The bike with ID {bikeId} was not found.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
+    notFound();
   }
 
   const isActive = bike.status === "Active";
