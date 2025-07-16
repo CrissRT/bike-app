@@ -26,7 +26,7 @@ async function handleUpdateBike(formData: FormData) {
 }
 
 export default async function BikePage({ params }: BikePageProps) {
-  const bikeId = parseInt(params.id);
+  const bikeId = Number(params.id);
   const bike = await getBikeById(bikeId);
 
   if (!bike) {
