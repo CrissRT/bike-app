@@ -2,21 +2,20 @@
 
 import { google, sheets_v4 } from "googleapis";
 
-import {
-  BikeNotFoundError,
-  GoogleSheetsError,
-  ValidationError,
-} from "@/types/error";
 import { getGoogleKeys } from "@/utils/google";
+import { ErrorResponse, SuccessResponse } from "@/types/response";
+import { Bike } from "@/types/bike";
 
 let googleSheets: sheets_v4.Sheets;
 
-async function getGoogleSheetsClient() {
+async function getGoogleSheetsClient(): Promise<sheets_v4.Sheets | null> {
   try {
     if (googleSheets) return googleSheets;
 
-    if (!process.env.GOOGLE_SHEET_ID)
-      throw new Error("GOOGLE_SHEET_ID environment variable is required");
+    if (!process.env.GOOGLE_SHEET_ID) {
+      console.error("GOOGLE_SHEET_ID environment variable is required");
+      return null;
+    }
 
     const credentials = await getGoogleKeys();
 
@@ -30,12 +29,7 @@ async function getGoogleSheetsClient() {
     return googleSheets;
   } catch (error) {
     console.error("Error creating Google Sheets client:", error);
-    throw new GoogleSheetsError(
-      `Failed to initialize Google Sheets client: ${
-        error instanceof Error ? error.message : "Unknown error"
-      }`,
-      error instanceof Error ? error : undefined
-    );
+    return null;
   }
 }
 
@@ -43,7 +37,7 @@ async function retryOperation<T>(
   operation: () => Promise<T>,
   maxRetries: number = 3,
   baseDelay: number = 1000
-) {
+): Promise<T | null> {
   let lastError: Error;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -52,7 +46,13 @@ async function retryOperation<T>(
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
 
-      if (attempt === maxRetries) throw lastError;
+      if (attempt === maxRetries) {
+        console.error(
+          `Operation failed after ${maxRetries} attempts:`,
+          lastError.message
+        );
+        return null;
+      }
 
       const delay = baseDelay * Math.pow(2, attempt - 1);
       console.warn(
@@ -63,13 +63,17 @@ async function retryOperation<T>(
     }
   }
 
-  throw lastError!;
+  return null;
 }
 
-export async function getAllBikes() {
+export async function getAllBikes(): Promise<
+  SuccessResponse<Bike[]> | ErrorResponse
+> {
   try {
-    return await retryOperation(async () => {
+    const data = await retryOperation(async () => {
       const glSheets = await getGoogleSheetsClient();
+
+      if (!glSheets) return null;
 
       const data = await glSheets.spreadsheets.values.get({
         spreadsheetId: process.env.GOOGLE_SHEET_ID,
@@ -78,28 +82,15 @@ export async function getAllBikes() {
 
       const rows = data.data.values || [];
 
-      if (!Array.isArray(rows))
-        throw new GoogleSheetsError(
-          "Invalid data format received from Google Sheets"
-        );
+      if (!Array.isArray(rows)) return null;
 
-      return rows.map((row, index) => {
-        try {
-          const id = parseInt(row[0]);
-          if (isNaN(id)) {
-            throw new ValidationError(
-              `Invalid ID format in row ${index + 2}: ${row[0]}`
-            );
-          }
+      return rows
+        .map((row, index) => {
+          const id = Number(row[0]);
+          if (isNaN(id)) return null;
 
           const status = row[1] as "Active" | "Inactive";
-          if (status !== "Active" && status !== "Inactive") {
-            throw new ValidationError(
-              `Invalid status in row ${
-                index + 2
-              }: ${status}. Must be "Active" or "Inactive"`
-            );
-          }
+          if (status !== "Active" && status !== "Inactive") return null;
 
           return {
             id,
@@ -107,47 +98,82 @@ export async function getAllBikes() {
             brand: row[2] || "",
             user: row[3] || "",
           };
-        } catch (error) {
-          console.error(`Error processing row ${index + 2}:`, error);
-          throw new GoogleSheetsError(
-            `Failed to process bike data in row ${index + 2}: ${
-              error instanceof Error ? error.message : "Unknown error"
-            }`
-          );
-        }
-      });
+        })
+        .filter((bike): bike is Bike => bike !== null);
     });
+
+    if (data === null) {
+      return {
+        success: false,
+        data: null,
+        error: new Error("Failed to fetch bikes from Google Sheets"),
+      };
+    }
+
+    return {
+      success: true,
+      data,
+      error: null,
+    };
   } catch (error) {
     console.error("Error fetching bikes from Google Sheets:", error);
-    throw new GoogleSheetsError(
-      `Failed to fetch bikes: ${
-        error instanceof Error ? error.message : "Unknown error"
-      }`
-    );
+    return {
+      success: false,
+      data: null,
+      error: new Error(
+        `Failed to fetch bikes: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      ),
+    };
   }
 }
 
-export async function getBikeById(id: number) {
+export async function getBikeById(
+  id: number
+): Promise<SuccessResponse<Bike> | ErrorResponse> {
   try {
-    if (!id || isNaN(id) || id <= 0) {
-      throw new ValidationError(
-        "Invalid bike ID. ID must be a positive number."
-      );
-    }
+    if (!id || isNaN(id) || id <= 0)
+      return {
+        success: false,
+        data: null,
+        error: new Error("Invalid bike ID. ID must be a positive number."),
+      };
 
-    const bikes = await getAllBikes();
-    return bikes.find((bike) => bike.id === id) || null;
+    const bikesResponse = await getAllBikes();
+
+    if (!bikesResponse.success)
+      return {
+        success: false,
+        data: null,
+        error: bikesResponse.error,
+      };
+
+    const bike = bikesResponse.data.find((bike) => bike.id === id);
+
+    if (!bike)
+      return {
+        success: false,
+        data: null,
+        error: new Error(`Bike with ID ${id} not found`),
+      };
+
+    return {
+      success: true,
+      data: bike,
+      error: null,
+    };
   } catch (error) {
     console.error(`Error fetching bike with ID ${id}:`, error);
-
-    if (error instanceof ValidationError || error instanceof GoogleSheetsError)
-      throw error;
-
-    throw new GoogleSheetsError(
-      `Failed to fetch bike: ${
-        error instanceof Error ? error.message : "Unknown error"
-      }`
-    );
+    return {
+      success: false,
+      data: null,
+      error: new Error(
+        `Failed to fetch bike: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      ),
+    };
   }
 }
 
@@ -155,31 +181,50 @@ export async function updateBikeStatus(
   id: number,
   status: "Active" | "Inactive",
   user: string = ""
-): Promise<void> {
+): Promise<SuccessResponse<void> | ErrorResponse> {
   try {
-    // Input validation
-    if (!id || isNaN(id) || id <= 0) {
-      throw new ValidationError(
-        "Invalid bike ID. ID must be a positive number."
-      );
-    }
+    if (!id || isNaN(id) || id <= 0)
+      return {
+        success: false,
+        data: null,
+        error: new Error("Invalid bike ID. ID must be a positive number."),
+      };
 
-    if (status !== "Active" && status !== "Inactive") {
-      throw new ValidationError(
-        'Invalid status. Status must be "Active" or "Inactive".'
-      );
-    }
+    if (status !== "Active" && status !== "Inactive")
+      return {
+        success: false,
+        data: null,
+        error: new Error(
+          'Invalid status. Status must be "Active" or "Inactive".'
+        ),
+      };
 
-    if (user && typeof user !== "string") {
-      throw new ValidationError("User must be a string.");
-    }
+    if (user && typeof user !== "string")
+      return {
+        success: false,
+        data: null,
+        error: new Error("User must be a string."),
+      };
 
-    await retryOperation(async () => {
+    const result = await retryOperation(async () => {
       const glSheets = await getGoogleSheetsClient();
-      const bikes = await getAllBikes();
+
+      if (!glSheets) {
+        return null;
+      }
+
+      const bikesResponse = await getAllBikes();
+
+      if (!bikesResponse.success) {
+        throw bikesResponse.error;
+      }
+
+      const bikes = bikesResponse.data;
       const bikeIndex = bikes.findIndex((bike) => bike.id === id);
 
-      if (bikeIndex === -1) throw new BikeNotFoundError(id);
+      if (bikeIndex === -1) {
+        throw new Error(`Bike with ID ${id} not found`);
+      }
 
       const bike = bikes[bikeIndex];
       const rowNumber = bikeIndex + 2; // +2 because sheets are 1-indexed and we skip the header
@@ -194,9 +239,7 @@ export async function updateBikeStatus(
       });
 
       if (!updateResult.data || !updateResult.data.updatedCells) {
-        throw new GoogleSheetsError(
-          "Failed to update bike status - no cells were updated"
-        );
+        throw new Error("Failed to update bike status - no cells were updated");
       }
 
       console.log(
@@ -205,25 +248,33 @@ export async function updateBikeStatus(
         }`
       );
     });
+
+    if (result === null)
+      return {
+        success: false,
+        data: null,
+        error: new Error("Failed to update bike status"),
+      };
+
+    return {
+      success: true,
+      data: undefined,
+      error: null,
+    };
   } catch (error) {
     console.error(`Error updating bike status for ID ${id}:`, error);
-
-    if (
-      error instanceof ValidationError ||
-      error instanceof BikeNotFoundError ||
-      error instanceof GoogleSheetsError
-    )
-      throw error;
-
-    throw new GoogleSheetsError(
-      `Failed to update bike status: ${
-        error instanceof Error ? error.message : "Unknown error"
-      }`
-    );
+    return {
+      success: false,
+      data: null,
+      error: new Error(
+        `Failed to update bike status: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      ),
+    };
   }
 }
 
-// Health check function to validate Google Sheets connection
 export async function validateGoogleSheetsConnection(): Promise<{
   isConnected: boolean;
   error?: string;
@@ -234,6 +285,12 @@ export async function validateGoogleSheetsConnection(): Promise<{
 }> {
   try {
     const glSheets = await getGoogleSheetsClient();
+
+    if (!glSheets)
+      return {
+        isConnected: false,
+        error: "Failed to initialize Google Sheets client",
+      };
 
     const spreadsheetInfo = await glSheets.spreadsheets.get({
       spreadsheetId: process.env.GOOGLE_SHEET_ID,
@@ -255,10 +312,18 @@ export async function validateGoogleSheetsConnection(): Promise<{
   }
 }
 
-// Function to safely get bike count without fetching all data
-export async function getBikeCount(): Promise<number> {
+export async function getBikeCount(): Promise<
+  SuccessResponse<number> | ErrorResponse
+> {
   try {
     const glSheets = await getGoogleSheetsClient();
+
+    if (!glSheets)
+      return {
+        success: false,
+        data: null,
+        error: new Error("Failed to initialize Google Sheets client"),
+      };
 
     const data = await glSheets.spreadsheets.values.get({
       spreadsheetId: process.env.GOOGLE_SHEET_ID,
@@ -266,14 +331,24 @@ export async function getBikeCount(): Promise<number> {
     });
 
     const rows = data.data.values || [];
-    // Subtract 1 for the header row
-    return Math.max(0, rows.length - 1);
+
+    const count = Math.max(0, rows.length - 1);
+
+    return {
+      success: true,
+      data: count,
+      error: null,
+    };
   } catch (error) {
     console.error("Error getting bike count:", error);
-    throw new GoogleSheetsError(
-      `Failed to get bike count: ${
-        error instanceof Error ? error.message : "Unknown error"
-      }`
-    );
+    return {
+      success: false,
+      data: null,
+      error: new Error(
+        `Failed to get bike count: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      ),
+    };
   }
 }

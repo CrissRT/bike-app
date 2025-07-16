@@ -75,10 +75,11 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## API Functions
 
-- `getAllBikes()`: Fetches all bikes from the Google Sheet
-- `getBikeById(id)`: Fetches a specific bike by ID
-- `updateBikeStatus(id, status, user)`: Updates bike status and user assignment
-- `addLogEntry(logEntry)`: Adds a new log entry (used by Apps Script)
+- `getAllBikes()`: Fetches all bikes from the Google Sheet, returns `SuccessResponse<Bike[]>` or `ErrorResponse`
+- `getBikeById(id)`: Fetches a specific bike by ID, returns `SuccessResponse<Bike | null>` or `ErrorResponse`
+- `updateBikeStatus(id, status, user)`: Updates bike status and user assignment, returns `SuccessResponse<void>` or `ErrorResponse`
+- `getBikeCount()`: Gets total bike count, returns `SuccessResponse<number>` or `ErrorResponse`
+- `validateGoogleSheetsConnection()`: Validates Google Sheets connection status
 
 ## Technology Stack
 

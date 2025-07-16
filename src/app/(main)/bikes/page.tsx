@@ -3,7 +3,21 @@ import { getAllBikes } from "@/actions/google";
 import { Bike } from "@/types/bike";
 
 export default async function BikesPage() {
-  const bikes = await getAllBikes();
+  const bikesResponse = await getAllBikes();
+
+  if (!bikesResponse.success) {
+    return (
+      <div className="text-center py-12">
+        <h1 className="text-3xl font-bold text-gray-800 mb-4">🚲 All Bikes</h1>
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded max-w-md mx-auto">
+          <p className="font-bold">Error loading bikes</p>
+          <p className="text-sm">{bikesResponse.error.message}</p>
+        </div>
+      </div>
+    );
+  }
+
+  const bikes = bikesResponse.data;
 
   return (
     <>
@@ -38,9 +52,7 @@ export default async function BikesPage() {
                     </span>
                   </div>
                   {bike.status === "Active" && bike.user && (
-                    <p className="text-sm text-gray-500">
-                      User: {bike.user}
-                    </p>
+                    <p className="text-sm text-gray-500">User: {bike.user}</p>
                   )}
                 </div>
               </div>

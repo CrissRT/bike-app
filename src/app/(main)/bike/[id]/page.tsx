@@ -2,6 +2,7 @@ import { getBikeById, updateBikeStatus } from "@/actions/google";
 import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import BikeForm from "@/components/BikeForm";
+import { toast } from "react-toastify";
 
 interface BikePageProps {
   params: Promise<{ id: string }>;
@@ -14,31 +15,56 @@ async function handleUpdateBike(formData: FormData) {
   const currentStatus = String(formData.get("currentStatus"));
   const userName = String(formData.get("userName"));
 
-  if (currentStatus === "Active") {
-    await updateBikeStatus(bikeId, "Inactive", "");
-    return;
-  }
+  try {
+    let result;
+    if (currentStatus === "Active")
+      result = await updateBikeStatus(bikeId, "Inactive", "");
+    else {
+      const trimmedUserName = userName.trim();
+      if (!trimmedUserName) {
+        toast.error("Please enter a user name to assign the bike.");
+        return;
+      }
 
-  const trimmedUserName = userName.trim();
-  if (trimmedUserName) {
-    await updateBikeStatus(bikeId, "Active", trimmedUserName);
+      result = await updateBikeStatus(bikeId, "Active", trimmedUserName);
+    }
+
+    if (result && !result.success) {
+      console.error("Failed to update bike status:", result.error.message);
+      toast.error("Failed to update bike status");
+      return;
+    }
+
     revalidatePath(`/bike/${bikeId}`);
-
-    return;
+    revalidatePath("/bikes");
+  } catch {
+    toast.error("Failed to update bike");
   }
-
-
-
-// TODO: toastify
 }
 
 export default async function BikePage({ params }: BikePageProps) {
   const { id } = await params;
   const bikeId = Number(id);
-  const bike = await getBikeById(bikeId);
+  const bikeResponse = await getBikeById(bikeId);
 
-  if (!bike) notFound();
+  if (!bikeResponse.success) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-6xl mb-4">🚲</div>
+        <h1 className="text-3xl font-bold text-gray-800 mb-4">
+          Error Loading Bike
+        </h1>
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded max-w-md mx-auto">
+          <p className="font-bold">Failed to load bike</p>
+          <p className="text-sm">{bikeResponse.error.message}</p>
+        </div>
+      </div>
+    );
+  }
 
+  if (!bikeResponse.data) notFound();
+
+  const bike = bikeResponse.data;
   const isActive = bike.status === "Active";
 
   return (
