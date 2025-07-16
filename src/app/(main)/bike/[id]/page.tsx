@@ -16,16 +16,20 @@ async function handleUpdateBike(formData: FormData) {
 
   if (currentStatus === "Active") {
     await updateBikeStatus(bikeId, "Inactive", "");
-  } else {
-    const trimmedUserName = userName.trim();
-    if (!trimmedUserName)
-      throw new Error("User name is required to activate bike");
-
-    await updateBikeStatus(bikeId, "Active", trimmedUserName);
+    return;
   }
 
-  // Revalidate the current page to refresh the data
-  revalidatePath(`/bike/${bikeId}`);
+  const trimmedUserName = userName.trim();
+  if (trimmedUserName) {
+    await updateBikeStatus(bikeId, "Active", trimmedUserName);
+    revalidatePath(`/bike/${bikeId}`);
+
+    return;
+  }
+
+
+
+// TODO: toastify
 }
 
 export default async function BikePage({ params }: BikePageProps) {
