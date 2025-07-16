@@ -10,7 +10,7 @@ export default function BikeNotFound() {
       </div>
       <h1 className="text-3xl font-bold text-gray-800 mb-4">Bike Not Found</h1>
       <p className="text-gray-600 mb-8">
-        Sorry, the bike you're looking for doesn't exist or may have been
+        Sorry, the bike you&apos;re looking for doesn&apos;t exist or may have been
         removed.
       </p>
 

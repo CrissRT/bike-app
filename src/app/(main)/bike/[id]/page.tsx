@@ -1,7 +1,6 @@
-import { getBikeById, updateBikeStatus } from "@/actions/google";
+import { getBikeById } from "@/actions/google";
 import { notFound } from "next/navigation";
 import BikeForm from "@/components/BikeForm";
-import { toast } from "react-toastify";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBicycle } from "@fortawesome/free-solid-svg-icons";
 

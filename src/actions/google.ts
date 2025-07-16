@@ -86,7 +86,7 @@ export async function getAllBikes(): Promise<
       if (!Array.isArray(rows)) return null;
 
       return rows
-        .map((row, index) => {
+        .map((row) => {
           const id = Number(row[0]);
           if (isNaN(id)) return null;
 

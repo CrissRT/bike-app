@@ -4,6 +4,8 @@ import { Bike } from "@/types/bike";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBicycle } from "@fortawesome/free-solid-svg-icons";
 
+export const dynamic = "force-dynamic";
+
 export default async function BikesPage() {
   const bikesResponse = await getAllBikes();
 
