@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bike Rental Management System
 
-## Getting Started
+A Next.js application for managing bike rentals with Google Sheets integration.
 
-First, run the development server:
+## Features
+
+- **Home Page (/)**: Welcome page with navigation to bike management
+- **Bikes Page (/bikes)**: View all bikes with their status and information
+- **Individual Bike Page (/bike/[id])**: Manage individual bike status and user assignment
+
+## Setup
+
+1. **Install dependencies**:
+
+```bash
+npm install
+# or
+pnpm install
+```
+
+2. **Configure Google Sheets API**:
+
+   - Create a Google Cloud project
+   - Enable Google Sheets API
+   - Create a service account and download the JSON key
+   - Rename the key file to `googleKey.json` and place it in the project root
+
+3. **Set up environment variables**:
+
+   - Copy `.env.local` and add your Google Sheet ID:
+
+   ```
+   GOOGLE_SHEET_ID=your_actual_google_sheet_id_here
+   ```
+
+4. **Google Sheets Structure**:
+   Your Google Sheet should have two sheets:
+
+   **"Bikes Database" sheet with columns:**
+
+   - A: ID (number)
+   - B: Status (Active/Inactive)
+   - C: Brand (text)
+   - D: User (text)
+
+   **"Logs" sheet with columns:**
+
+   - A: Date
+   - B: Type (Added/Returned)
+   - C: Bike Number
+   - D: Brand
+   - E: User
+
+5. **Apps Script Setup**:
+   - Add the provided Apps Script code to your Google Sheet
+   - Run `initializeBikeRentalSystem()` function once to set up the sheets
+
+## Running the Application
 
 ```bash
 npm run dev
 # or
-yarn dev
-# or
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## How it Works
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **View All Bikes**: Navigate to `/bikes` to see all bikes with their current status
+2. **Manage Individual Bikes**: Click on any bike to go to its detail page
+3. **Active Bikes**: Show current user and "Set Inactive" button to return the bike
+4. **Inactive Bikes**: Show user input field and "Set Active" button to assign the bike
+5. **Automatic Logging**: The Google Apps Script automatically logs all status changes
 
-## Learn More
+## API Functions
 
-To learn more about Next.js, take a look at the following resources:
+- `getAllBikes()`: Fetches all bikes from the Google Sheet
+- `getBikeById(id)`: Fetches a specific bike by ID
+- `updateBikeStatus(id, status, user)`: Updates bike status and user assignment
+- `addLogEntry(logEntry)`: Adds a new log entry (used by Apps Script)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Technology Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Next.js 14** with App Router
+- **TypeScript** for type safety
+- **Tailwind CSS** for styling
+- **Google Sheets API** for data storage
+- **Google Apps Script** for automatic logging
