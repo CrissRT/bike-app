@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBicycle } from "@fortawesome/free-solid-svg-icons";
 
 export default function Home() {
   return (
@@ -6,7 +8,9 @@ export default function Home() {
       <div className="max-w-md w-full">
         <div className="bg-white rounded-xl shadow-lg p-8 text-center">
           <div className="mb-8">
-            <div className="text-6xl mb-4">🚲</div>
+            <div className="text-6xl mb-4 text-lime-800">
+              <FontAwesomeIcon icon={faBicycle} />
+            </div>
             <h1 className="text-3xl font-bold text-gray-800 mb-2">
               Bike Rental System
             </h1>

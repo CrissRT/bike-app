@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { getAllBikes } from "@/actions/google";
 import { Bike } from "@/types/bike";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBicycle } from "@fortawesome/free-solid-svg-icons";
 
 export default async function BikesPage() {
   const bikesResponse = await getAllBikes();
@@ -8,7 +10,12 @@ export default async function BikesPage() {
   if (!bikesResponse.success) {
     return (
       <div className="text-center py-12">
-        <h1 className="text-3xl font-bold text-gray-800 mb-4">🚲 All Bikes</h1>
+        <h1 className="text-3xl font-bold text-gray-800 mb-4">
+          <span className="text-lime-800">
+            <FontAwesomeIcon icon={faBicycle} />
+          </span>{" "}
+          All Bikes
+        </h1>
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded max-w-md mx-auto">
           <p className="font-bold">Error loading bikes</p>
           <p className="text-sm">{bikesResponse.error.message}</p>
@@ -22,7 +29,10 @@ export default async function BikesPage() {
   return (
     <>
       <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">
-        🚲 All Bikes
+        <span className="text-lime-800">
+          <FontAwesomeIcon icon={faBicycle} />
+        </span>{" "}
+        All Bikes
       </h1>
 
       {bikes.length === 0 ? (
@@ -35,7 +45,9 @@ export default async function BikesPage() {
             <Link key={bike.id} href={`/bike/${bike.id}`} className="group">
               <div className="bg-white border-2 border-gray-200 rounded-lg p-6 hover:border-indigo-300 hover:shadow-md transition-all duration-200 group-hover:scale-105">
                 <div className="text-center">
-                  <div className="text-4xl mb-3">🚲</div>
+                  <div className="text-4xl mb-3 text-lime-800">
+                    <FontAwesomeIcon icon={faBicycle} />
+                  </div>
                   <h3 className="text-xl font-bold text-gray-800 mb-2">
                     Bike #{bike.id}
                   </h3>

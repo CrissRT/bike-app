@@ -1,3 +1,5 @@
+import { faBicycle } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Link from "next/link";
 
 export default function NotFound() {
@@ -5,7 +7,9 @@ export default function NotFound() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-          <div className="text-6xl mb-6">🚲</div>
+          <div className="text-6xl mb-6 text-lime-800">
+            <FontAwesomeIcon icon={faBicycle} />
+          </div>
           <h1 className="text-3xl font-bold text-gray-800 mb-4">
             404 - Page Not Found
           </h1>

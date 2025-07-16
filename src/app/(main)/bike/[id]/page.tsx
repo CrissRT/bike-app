@@ -2,6 +2,8 @@ import { getBikeById, updateBikeStatus } from "@/actions/google";
 import { notFound } from "next/navigation";
 import BikeForm from "@/components/BikeForm";
 import { toast } from "react-toastify";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBicycle } from "@fortawesome/free-solid-svg-icons";
 
 interface BikePageProps {
   params: Promise<{ id: string }>;
@@ -15,7 +17,9 @@ export default async function BikePage({ params }: BikePageProps) {
   if (!bikeResponse.success) {
     return (
       <div className="text-center py-12">
-        <div className="text-6xl mb-4">🚲</div>
+        <div className="text-6xl mb-4 text-lime-800">
+          <FontAwesomeIcon icon={faBicycle} />
+        </div>
         <h1 className="text-3xl font-bold text-gray-800 mb-4">
           Error Loading Bike
         </h1>
@@ -35,7 +39,9 @@ export default async function BikePage({ params }: BikePageProps) {
   return (
     <>
       <div className="text-center mb-8">
-        <div className="text-6xl mb-4">🚲</div>
+        <div className="text-6xl mb-4 text-lime-800">
+          <FontAwesomeIcon icon={faBicycle} />
+        </div>
         <h1 className="text-3xl font-bold text-gray-800 mb-2">
           Bike #{bike.id}
         </h1>
