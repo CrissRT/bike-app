@@ -47,19 +47,37 @@ pnpm install
    ```
 
 4. **Google Sheets Structure**:
-   Your Google Sheet should have a sheet named **"Bikes Database"** with columns:
+   Your Google Sheet should have two sheets:
+
+   **"Bikes Database" sheet with columns:**
 
    - **A**: ID (number) - Unique bike identifier
    - **B**: Status (Active/Inactive) - Current bike status
    - **C**: Brand (text) - Bike brand/model
    - **D**: User (text) - Current user (empty for inactive bikes)
 
-   Example data:
+   **"Logs" sheet with columns:**
+
+   - **A**: Date (DD MMM YY format) - Date of status change
+   - **B**: Type (Added/Returned) - Type of action
+   - **C**: Bike Number (number) - Bike ID
+   - **D**: Brand (text) - Bike brand
+   - **E**: User (text) - User involved in the action
+
+   Example Bikes Database data:
 
    ```
    1  | Active   | Trek    | John Doe
    2  | Inactive | Giant   |
    3  | Active   | Specialized | Jane Smith
+   ```
+
+   Example Logs data:
+
+   ```
+   15 Jul 25 | Added    | 1 | Trek    | John Doe
+   15 Jul 25 | Returned | 2 | Giant   | Jane Smith
+   16 Jul 25 | Added    | 3 | Specialized | Mike Johnson
    ```
 
 ## Running the Application
@@ -162,8 +180,10 @@ All API functions are server actions that return structured responses:
 
 - **`updateBikeStatus(formData: FormData)`**: Updates bike status and user assignment
   - Returns: `SuccessResponse<void>` or `ErrorResponse`
-  - Features: Form data handling, automatic path revalidation, business logic
+  - Features: Form data handling, automatic path revalidation, business logic, logging
   - Handles: Status toggling, user assignment/removal, validation
+  - Logging: Automatically logs all status changes to "Logs" sheet (Added/Returned)
+  - Validation: Requires User field when activating bikes, clears User field when deactivating
 
 ### Utility Functions
 

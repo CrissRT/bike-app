@@ -195,21 +195,24 @@ export async function updateBikeStatus(
 
     let newStatus: "Active" | "Inactive";
     let newUser: string;
+    let logType: "Added" | "Returned";
 
     if (currentStatus === "Active") {
       newStatus = "Inactive";
       newUser = "";
+      logType = "Returned";
     } else {
       const trimmedUserName = userName.trim();
       if (!trimmedUserName)
         return {
           success: false,
           data: null,
-          error: new Error("Please enter a user name to assign the bike."),
+          error: new Error("Add User First"),
         };
 
       newStatus = "Active";
       newUser = trimmedUserName;
+      logType = "Added";
     }
 
     const result = await retryOperation(async () => {
@@ -219,9 +222,7 @@ export async function updateBikeStatus(
 
       const bikesResponse = await getAllBikes();
 
-      if (!bikesResponse.success) {
-        throw bikesResponse.error;
-      }
+      if (!bikesResponse.success) return null;
 
       const bikes = bikesResponse.data;
       const bikeIndex = bikes.findIndex((bike) => bike.id === bikeId);
@@ -241,6 +242,33 @@ export async function updateBikeStatus(
       });
 
       if (!updateResult.data || !updateResult.data.updatedCells) return null;
+
+      const currentDate = new Date();
+      const day = currentDate.getDate();
+      const month = currentDate.toLocaleString("en-US", { month: "short" });
+      const year = currentDate.getFullYear().toString().slice(-2);
+      const formattedDate = `${day} ${month} ${year}`;
+
+      const logEntry = [
+        formattedDate,
+        logType,
+        bikeId,
+        bike.brand,
+        logType === "Added" ? newUser : bike.user || "",
+      ];
+
+      try {
+        await glSheets.spreadsheets.values.append({
+          spreadsheetId: process.env.GOOGLE_SHEET_ID,
+          range: "Logs!A:E",
+          valueInputOption: "RAW",
+          requestBody: {
+            values: [logEntry],
+          },
+        });
+      } catch (logError) {
+        console.warn("Failed to add log entry:", logError);
+      }
 
       return true;
     });
