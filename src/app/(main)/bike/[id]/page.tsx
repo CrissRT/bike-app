@@ -1,45 +1,10 @@
 import { getBikeById, updateBikeStatus } from "@/actions/google";
 import { notFound } from "next/navigation";
-import { revalidatePath } from "next/cache";
 import BikeForm from "@/components/BikeForm";
 import { toast } from "react-toastify";
 
 interface BikePageProps {
   params: Promise<{ id: string }>;
-}
-
-async function handleUpdateBike(formData: FormData) {
-  "use server";
-
-  const bikeId = Number(formData.get("bikeId"));
-  const currentStatus = String(formData.get("currentStatus"));
-  const userName = String(formData.get("userName"));
-
-  try {
-    let result;
-    if (currentStatus === "Active")
-      result = await updateBikeStatus(bikeId, "Inactive", "");
-    else {
-      const trimmedUserName = userName.trim();
-      if (!trimmedUserName) {
-        toast.error("Please enter a user name to assign the bike.");
-        return;
-      }
-
-      result = await updateBikeStatus(bikeId, "Active", trimmedUserName);
-    }
-
-    if (result && !result.success) {
-      console.error("Failed to update bike status:", result.error.message);
-      toast.error("Failed to update bike status");
-      return;
-    }
-
-    revalidatePath(`/bike/${bikeId}`);
-    revalidatePath("/bikes");
-  } catch {
-    toast.error("Failed to update bike");
-  }
 }
 
 export default async function BikePage({ params }: BikePageProps) {
@@ -93,7 +58,7 @@ export default async function BikePage({ params }: BikePageProps) {
         )}
       </div>
 
-      <BikeForm bike={bike} handleUpdateBike={handleUpdateBike} />
+      <BikeForm bike={bike} />
     </>
   );
 }

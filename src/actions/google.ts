@@ -5,6 +5,7 @@ import { google, sheets_v4 } from "googleapis";
 import { getGoogleKeys } from "@/utils/google";
 import { ErrorResponse, SuccessResponse } from "@/types/response";
 import { Bike } from "@/types/bike";
+import { revalidatePath } from "next/cache";
 
 let googleSheets: sheets_v4.Sheets;
 
@@ -178,40 +179,43 @@ export async function getBikeById(
 }
 
 export async function updateBikeStatus(
-  id: number,
-  status: "Active" | "Inactive",
-  user: string = ""
+  formData: FormData
 ): Promise<SuccessResponse<void> | ErrorResponse> {
   try {
-    if (!id || isNaN(id) || id <= 0)
+    const bikeId = Number(formData.get("bikeId"));
+    const currentStatus = String(formData.get("currentStatus"));
+    const userName = String(formData.get("userName"));
+
+    if (!bikeId || isNaN(bikeId) || bikeId <= 0)
       return {
         success: false,
         data: null,
         error: new Error("Invalid bike ID. ID must be a positive number."),
       };
 
-    if (status !== "Active" && status !== "Inactive")
-      return {
-        success: false,
-        data: null,
-        error: new Error(
-          'Invalid status. Status must be "Active" or "Inactive".'
-        ),
-      };
+    let newStatus: "Active" | "Inactive";
+    let newUser: string;
 
-    if (user && typeof user !== "string")
-      return {
-        success: false,
-        data: null,
-        error: new Error("User must be a string."),
-      };
+    if (currentStatus === "Active") {
+      newStatus = "Inactive";
+      newUser = "";
+    } else {
+      const trimmedUserName = userName.trim();
+      if (!trimmedUserName)
+        return {
+          success: false,
+          data: null,
+          error: new Error("Please enter a user name to assign the bike."),
+        };
+
+      newStatus = "Active";
+      newUser = trimmedUserName;
+    }
 
     const result = await retryOperation(async () => {
       const glSheets = await getGoogleSheetsClient();
 
-      if (!glSheets) {
-        return null;
-      }
+      if (!glSheets) return null;
 
       const bikesResponse = await getAllBikes();
 
@@ -220,11 +224,9 @@ export async function updateBikeStatus(
       }
 
       const bikes = bikesResponse.data;
-      const bikeIndex = bikes.findIndex((bike) => bike.id === id);
+      const bikeIndex = bikes.findIndex((bike) => bike.id === bikeId);
 
-      if (bikeIndex === -1) {
-        throw new Error(`Bike with ID ${id} not found`);
-      }
+      if (bikeIndex === -1) return null;
 
       const bike = bikes[bikeIndex];
       const rowNumber = bikeIndex + 2; // +2 because sheets are 1-indexed and we skip the header
@@ -234,19 +236,13 @@ export async function updateBikeStatus(
         range: `Bikes Database!B${rowNumber}:D${rowNumber}`,
         valueInputOption: "RAW",
         requestBody: {
-          values: [[status, bike.brand, user]],
+          values: [[newStatus, bike.brand, newUser]],
         },
       });
 
-      if (!updateResult.data || !updateResult.data.updatedCells) {
-        throw new Error("Failed to update bike status - no cells were updated");
-      }
+      if (!updateResult.data || !updateResult.data.updatedCells) return null;
 
-      console.log(
-        `Successfully updated bike ${id} status to ${status}${
-          user ? ` for user ${user}` : ""
-        }`
-      );
+      return true;
     });
 
     if (result === null)
@@ -256,13 +252,16 @@ export async function updateBikeStatus(
         error: new Error("Failed to update bike status"),
       };
 
+    revalidatePath(`/bike/${bikeId}`);
+    revalidatePath("/bikes");
+
     return {
       success: true,
       data: undefined,
       error: null,
     };
   } catch (error) {
-    console.error(`Error updating bike status for ID ${id}:`, error);
+    console.error("Error updating bike status:", error);
     return {
       success: false,
       data: null,

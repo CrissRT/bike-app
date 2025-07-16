@@ -1,6 +1,8 @@
 "use client";
 
+import { updateBikeStatus } from "@/actions/google";
 import { SubmitButton } from "./SubmitButton";
+import { toast } from "react-toastify";
 
 interface Props {
   bike: {
@@ -8,14 +10,22 @@ interface Props {
     status: "Active" | "Inactive";
     user: string;
   };
-  handleUpdateBike: (formData: FormData) => Promise<void>;
 }
 
-export default function BikeForm({ bike, handleUpdateBike }: Props) {
+export default function BikeForm({ bike }: Props) {
   const isActive = bike.status === "Active";
 
+  const handleUpdateBikeStatus = async (formData: FormData) => {
+    const response = await updateBikeStatus(formData);
+
+    if (!response.success) {
+      toast.error(response.error.message || "Failed to update bike status");
+      return;
+    }
+  };
+
   return (
-    <form action={handleUpdateBike} className="space-y-6">
+    <form action={handleUpdateBikeStatus} className="space-y-6">
       <input type="hidden" name="bikeId" value={bike.id} />
       <input type="hidden" name="currentStatus" value={bike.status} />
 
@@ -40,7 +50,6 @@ export default function BikeForm({ bike, handleUpdateBike }: Props) {
               type="text"
               id="userName"
               name="userName"
-              required
               className="w-full text-black px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               placeholder="Enter user name"
             />

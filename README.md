@@ -76,8 +76,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## API Functions
 
 - `getAllBikes()`: Fetches all bikes from the Google Sheet, returns `SuccessResponse<Bike[]>` or `ErrorResponse`
-- `getBikeById(id)`: Fetches a specific bike by ID, returns `SuccessResponse<Bike | null>` or `ErrorResponse`
-- `updateBikeStatus(id, status, user)`: Updates bike status and user assignment, returns `SuccessResponse<void>` or `ErrorResponse`
+- `getBikeById(id)`: Fetches a specific bike by ID, returns `SuccessResponse<Bike>` or `ErrorResponse`
+- `updateBikeStatus(formData)`: Updates bike status and user assignment from form data, returns `SuccessResponse<void>` or `ErrorResponse`
 - `getBikeCount()`: Gets total bike count, returns `SuccessResponse<number>` or `ErrorResponse`
 - `validateGoogleSheetsConnection()`: Validates Google Sheets connection status
 
