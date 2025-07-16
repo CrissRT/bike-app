@@ -16,10 +16,11 @@ async function handleUpdateBike(formData: FormData) {
   if (currentStatus === "Active")
     await updateBikeStatus(bikeId, "Inactive", "");
   else {
-    if (!userName || userName.trim() === "")
+    const trimmedUserName = userName.trim();
+    if (!trimmedUserName)
       throw new Error("User name is required to activate bike");
 
-    await updateBikeStatus(bikeId, "Active", userName.trim());
+    await updateBikeStatus(bikeId, "Active", trimmedUserName);
   }
 
   redirect(`/bike/${bikeId}`);
@@ -106,7 +107,7 @@ export default async function BikePage({ params }: BikePageProps) {
                 </p>
                 <button
                   type="submit"
-                  className="bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-8 rounded-lg transition-colors"
+                  className="bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-8 rounded-lg transition-colors hover:cursor-pointer"
                 >
                   Set Inactive (Return Bike)
                 </button>
@@ -132,7 +133,7 @@ export default async function BikePage({ params }: BikePageProps) {
                 <div className="text-center">
                   <button
                     type="submit"
-                    className="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-8 rounded-lg transition-colors"
+                    className="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-8 rounded-lg transition-colors hover:cursor-pointer"
                   >
                     Set Active (Assign Bike)
                   </button>
