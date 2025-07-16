@@ -128,7 +128,8 @@ src/
 │   ├── globals.css       # Global styles
 │   ├── layout.tsx        # Root layout
 │   ├── page.tsx          # Home page
-│   └── not-found.tsx     # 404 page
+│   ├── not-found.tsx     # 404 page
+│   └── global-error.tsx  # Global error boundary
 ├── components/
 │   ├── BikeForm.tsx      # Form for updating bike status
 │   └── SubmitButton.tsx  # Submit button component
@@ -163,10 +164,12 @@ src/
 
 ### Error Handling
 
+- **Global Error Boundary**: `global-error.tsx` catches unhandled errors application-wide
 - **Graceful Error Pages**: Custom 404 pages for missing bikes and general errors
 - **API Error Handling**: All API functions return structured success/error responses
 - **User-Friendly Messages**: Clear error messages displayed to users
 - **Retry Logic**: Built-in exponential backoff retry mechanism for Google Sheets API calls
+- **Error Logging**: All errors are logged to console with detailed information
 
 ### Logging System
 
@@ -256,10 +259,12 @@ interface Bike {
 
 ### Error Handling
 
+- **Multi-Level Error Boundaries**: Global error boundary for app-wide errors, component-level boundaries for granular handling
 - **No Thrown Errors**: All functions return structured responses instead of throwing
 - **Graceful Degradation**: UI handles errors gracefully with user-friendly messages
 - **Retry Logic**: Built-in exponential backoff retry mechanism for Google Sheets API calls
 - **Comprehensive Logging**: Failed operations are logged with detailed error messages
+- **Error Recovery**: Reset functionality allows users to recover from error states
 
 ### Logging & Analytics
 
